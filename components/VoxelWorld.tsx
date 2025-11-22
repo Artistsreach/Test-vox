@@ -14,8 +14,9 @@ export interface NearbyNPC {
 interface VoxelWorldProps {
   voxels: Voxel[];
   selectedColor: string;
-  onAddVoxel: (position: [number, number, number], color: string) => void;
-  onAddVoxels: (voxels: { position: [number, number, number]; color: string }[]) => void;
+  selectedVoxelSize: number;
+  onAddVoxel: (position: [number, number, number], color: string, size?: number) => void;
+  onAddVoxels: (voxels: { position: [number, number, number]; color: string; size?: number }[]) => void;
   onRemoveVoxel: (id: number) => void;
   onRemoveVoxels: (positions: [number, number, number][]) => void;
   movement: { x: number; y: number };
@@ -722,6 +723,7 @@ const spawnObjectFunctionDeclaration: FunctionDeclaration = {
 const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
   voxels,
   selectedColor,
+  selectedVoxelSize,
   onAddVoxel,
   onAddVoxels,
   onRemoveVoxel,
@@ -958,7 +960,7 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
                placePosition = [Math.round(target.x), 0, Math.round(target.z)];
           }
       }
-      if (placePosition) onAddVoxel(placePosition, selectedColor);
+      if (placePosition) onAddVoxel(placePosition, selectedColor, selectedVoxelSize);
   };
 
   const handleDestroy = (clientX: number, clientY: number) => {
@@ -2185,7 +2187,12 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
             const matrix = new THREE.Matrix4();
             const color = new THREE.Color();
             voxels.forEach((voxel, i) => {
-                matrix.setPosition(voxel.position[0], voxel.position[1], voxel.position[2]);
+                const size = voxel.size || 1.0; // Default to 1.0 if no size specified
+                matrix.compose(
+                    new THREE.Vector3(voxel.position[0], voxel.position[1], voxel.position[2]),
+                    new THREE.Quaternion(),
+                    new THREE.Vector3(size, size, size)
+                );
                 mesh.setMatrixAt(i, matrix);
                 mesh.setColorAt(i, color.set(voxel.color));
             });
