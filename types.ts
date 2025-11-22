@@ -8,6 +8,7 @@ export interface Voxel {
   id: number;
   position: [number, number, number];
   color: string;
+  size?: number;
 }
 
 export type HairStyle = 'short' | 'long' | 'ponytail' | 'bald' | 'mohawk' | 'bun' | 'longBob' | 'pixie' | 'pigtails' | 'sideSwept' | 'braid';

@@ -876,7 +876,7 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
     forSaleSigns: [] as THREE.Vector3[],
     instancedMesh: null as THREE.InstancedMesh | null,
     highlighter: new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x000000 })),
-    targetBlock: null as { id: number; position: THREE.Vector3; normal: THREE.Vector3 } | null,
+    targetBlock: null as { id: number; position: THREE.Vector3; normal: THREE.Vector3, newPosition: THREE.Vector3 } | null,
     gridHelper: null as THREE.GridHelper | null,
 
     doors: [] as {
@@ -1819,9 +1819,14 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
             const position = new THREE.Vector3().setFromMatrixPosition(matrix);
             const normal = intersection.face?.normal.clone().transformDirection(instancedMesh.matrixWorld).round();
             if (normal && voxels[instanceId]) {
-                state.targetBlock = { id: voxels[instanceId].id, position: position, normal: normal };
-                state.highlighter.position.copy(position);
+                const existingVoxel = voxels[instanceId];
+                const existingSize = existingVoxel.size || 1.0;
+                const newPosition = position.clone().add(normal.clone().multiplyScalar((existingSize / 2) + (selectedVoxelSize / 2)));
+
+                state.targetBlock = { id: existingVoxel.id, position: position, normal: normal, newPosition: newPosition };
+                state.highlighter.position.copy(newPosition);
                 state.highlighter.visible = true;
+
             } else { state.targetBlock = null; state.highlighter.visible = false; }
         } else { state.targetBlock = null; state.highlighter.visible = false; }
     } else { state.targetBlock = null; state.highlighter.visible = false; }
@@ -1955,6 +1960,24 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
     isFreeCameraRef.current = isFreeCamera;
     if (state.gridHelper) state.gridHelper.visible = isFreeCamera;
   }, [isFreeCamera, state.gridHelper]);
+
+  useEffect(() => {
+      if (state.highlighter) {
+        state.scene.remove(state.highlighter);
+        state.highlighter.geometry.dispose();
+        (state.highlighter.material as THREE.Material).dispose();
+      }
+
+      const size = selectedVoxelSize || 1.0;
+      const highlighterGeo = new THREE.BoxGeometry(size + 0.02, size + 0.02, size + 0.02);
+      const highlighterEdges = new THREE.EdgesGeometry(highlighterGeo);
+      state.highlighter = new THREE.LineSegments(
+          highlighterEdges,
+          new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6 })
+      );
+      state.highlighter.visible = false;
+      state.scene.add(state.highlighter);
+  }, [selectedVoxelSize, state.scene]);
 
   const prevIsFreeCamera = useRef(isFreeCamera);
   useEffect(() => {
@@ -2099,7 +2122,7 @@ const VoxelWorld = forwardRef<VoxelWorldApi, VoxelWorldProps>(({
   };
 
   useImperativeHandle(ref, () => ({
-    build: () => { if (state.targetBlock) { const { position, normal } = state.targetBlock; const newPosition = new THREE.Vector3().copy(position).add(normal).round(); onAddVoxel([newPosition.x, newPosition.y, newPosition.z], selectedColor); } },
+    build: () => { if (state.targetBlock) { const { newPosition } = state.targetBlock; onAddVoxel([newPosition.x, newPosition.y, newPosition.z], selectedColor, selectedVoxelSize); } },
     destroy: () => { if (state.targetBlock) onRemoveVoxel(state.targetBlock.id); },
     jump: () => { if (state.player.isGrounded && !isFreeCamera) state.player.velocity.y = 10; },
     startConversation,
