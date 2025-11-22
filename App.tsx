@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import VoxelWorld, { VoxelWorldApi, NearbyNPC } from './components/VoxelWorld';
 import Controls from './components/Controls';
@@ -534,6 +533,7 @@ function generateWorldData(theme: WorldTheme) {
 const App: React.FC = () => {
   const [voxels, setVoxels] = useState<Voxel[]>([]);
   const [selectedColor, setSelectedColor] = useState('#ef4444');
+  const [selectedVoxelSize, setSelectedVoxelSize] = useState(1.0);
   const [isFreeCamera, setIsFreeCamera] = useState(false);
   const [movement, setMovement] = useState({ x: 0, y: 0 });
   const [isCustomizing, setIsCustomizing] = useState(false);
@@ -584,16 +584,16 @@ const App: React.FC = () => {
     }, 100);
   }, [currentTheme]);
 
-  const handleAddVoxel = useCallback((position: [number, number, number], color: string) => {
+  const handleAddVoxel = useCallback((position: [number, number, number], color: string, size?: number) => {
     setVoxels(prev => {
-      const newVoxels = [...prev, { id: Date.now(), position, color }];
+      const newVoxels = [...prev, { id: Date.now(), position, color, size }];
       return newVoxels;
     });
   }, []);
   
-  const handleAddVoxels = useCallback((newVoxelsData: { position: [number, number, number]; color: string }[]) => {
+  const handleAddVoxels = useCallback((newVoxelsData: { position: [number, number, number]; color: string; size?: number }[]) => {
       setVoxels(prev => {
-          const added = newVoxelsData.map((v, i) => ({ id: Date.now() + i, position: v.position, color: v.color }));
+          const added = newVoxelsData.map((v, i) => ({ id: Date.now() + i, position: v.position, color: v.color, size: v.size }));
           return [...prev, ...added];
       });
   }, []);
@@ -698,6 +698,7 @@ const App: React.FC = () => {
         ref={voxelWorldRef}
         voxels={voxels}
         selectedColor={selectedColor}
+        selectedVoxelSize={selectedVoxelSize}
         onAddVoxel={handleAddVoxel}
         onAddVoxels={handleAddVoxels}
         onRemoveVoxel={handleRemoveVoxel}
@@ -755,6 +756,8 @@ const App: React.FC = () => {
       <Controls
         selectedColor={selectedColor}
         setSelectedColor={setSelectedColor}
+        selectedVoxelSize={selectedVoxelSize}
+        setSelectedVoxelSize={setSelectedVoxelSize}
         onBuild={() => voxelWorldRef.current?.build()}
         onDestroy={() => voxelWorldRef.current?.destroy()}
         onJump={() => voxelWorldRef.current?.jump()}
