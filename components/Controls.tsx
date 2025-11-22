@@ -1,9 +1,10 @@
-
 import React, { useState, useRef } from 'react';
 
 interface ControlsProps {
   selectedColor: string;
   setSelectedColor: (color: string) => void;
+  selectedVoxelSize: number;
+  setSelectedVoxelSize: (size: number) => void;
   onBuild: () => void;
   onDestroy: () => void;
   onJump: () => void;
@@ -27,6 +28,12 @@ interface ControlsProps {
 
 const COLORS = [
   '#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6', '#8b5cf6', '#d946ef', '#ec4899', '#f8fafc', '#a16207', '#44403c',
+];
+
+const VOXEL_SIZES = [
+  { value: 0.25, label: 'Tiny' },
+  { value: 0.5, label: 'Small' },
+  { value: 1.0, label: 'Normal' },
 ];
 
 const BuildIcon = ({ color }: { color: string }) => (
@@ -61,6 +68,8 @@ const CameraIcon = () => (
 const Controls: React.FC<ControlsProps> = ({
   selectedColor,
   setSelectedColor,
+  selectedVoxelSize,
+  setSelectedVoxelSize,
   onBuild,
   onDestroy,
   onJump,
@@ -226,12 +235,35 @@ const Controls: React.FC<ControlsProps> = ({
                     
                     {/* Palette Popup */}
                     {isPaletteOpen && (
-                         <div className="absolute bottom-full mb-2 right-0 bg-black/80 backdrop-blur-md p-2 rounded-xl border border-white/20 shadow-xl animate-in fade-in zoom-in origin-bottom-right z-30">
+                         <div className="absolute bottom-full mb-2 right-0 bg-black/80 backdrop-blur-md p-3 rounded-xl border border-white/20 shadow-xl animate-in fade-in zoom-in origin-bottom-right z-30">
+                            {/* Voxel Size Selector */}
+                            <div className="mb-3 pb-3 border-b border-white/20">
+                                <div className="text-white/70 text-xs font-medium mb-2 text-center">Voxel Size</div>
+                                <div className="flex gap-2 justify-center">
+                                    {VOXEL_SIZES.map((size) => (
+                                        <button
+                                            key={size.value}
+                                            onClick={() => setSelectedVoxelSize(size.value)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                                selectedVoxelSize === size.value 
+                                                ? 'bg-blue-500 text-white border-2 border-blue-300' 
+                                                : 'bg-white/10 text-white/70 border-2 border-transparent hover:bg-white/20'
+                                            }`}
+                                            aria-label={`Select ${size.label} voxel size`}
+                                        >
+                                            {size.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                            
+                            {/* Color Selector */}
+                            <div className="text-white/70 text-xs font-medium mb-2 text-center">Color</div>
                             <div className="flex flex-wrap justify-end gap-1 w-[140px]">
                                 {COLORS.map((color) => (
                                 <button
                                     key={color}
-                                    onClick={() => { setSelectedColor(color); setIsPaletteOpen(false); }}
+                                    onClick={() => { setSelectedColor(color); }}
                                     className={`w-8 h-8 rounded-full border-2 shadow-sm transition-transform ${selectedColor === color ? 'border-white scale-110 z-10' : 'border-transparent hover:scale-110 opacity-90'}`}
                                     style={{ backgroundColor: color }}
                                     aria-label={`Select color ${color}`}
@@ -279,3 +311,4 @@ const Controls: React.FC<ControlsProps> = ({
 };
 
 export default Controls;
+
